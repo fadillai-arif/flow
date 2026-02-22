@@ -700,6 +700,22 @@ if active_tab == "Data & Analisis":
                 fig_corr.update_layout(height=300, xaxis_title="Lag", yaxis_title="Corr", margin=dict(t=10))
                 st.plotly_chart(fig_corr, use_container_width=True)
 
+    if has_water_level and "water_level" in df.columns:
+        st.subheader("Lag Correlation: Variabel Cuaca → Water Level")
+        for row_start in range(0, len(WEATHER_VARS), 3):
+            row_vars = WEATHER_VARS[row_start:row_start + 3]
+            cols_lag_wl = st.columns(len(row_vars))
+            for i, var in enumerate(row_vars):
+                bl_wl, corr_df_wl = find_best_lag(df["water_level"].values, df[var].values)
+                with cols_lag_wl[i]:
+                    st.markdown(f"**{WEATHER_LABELS[var]} → Water Level**")
+                    st.success(f"Best Lag: **{bl_wl} bulan**")
+                    fig_corr_wl = go.Figure()
+                    colors_wl = ["#2ca02c" if lag == bl_wl else "#d62728" for lag in corr_df_wl["Lag"]]
+                    fig_corr_wl.add_trace(go.Bar(x=corr_df_wl["Lag"], y=corr_df_wl["Correlation"], marker_color=colors_wl))
+                    fig_corr_wl.update_layout(height=300, xaxis_title="Lag", yaxis_title="Corr", margin=dict(t=10))
+                    st.plotly_chart(fig_corr_wl, use_container_width=True)
+
     st.subheader("Data Tabel")
     display_df = df.copy()
     display_df["date"] = display_df["date"].dt.strftime("%Y-%m")
