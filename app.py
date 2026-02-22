@@ -77,6 +77,25 @@ WEATHER_LABELS = {
 }
 
 
+ef normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.copy()
+    df.columns = [c.strip() for c in df.columns]
+
+    rename_map = {}
+    # Samakan semua variasi nama kolom water level jadi 'water_level'
+    if "water level" in df.columns and "water_level" not in df.columns:
+        rename_map["water level"] = "water_level"
+    if "Water Level" in df.columns and "water_level" not in df.columns:
+        rename_map["Water Level"] = "water_level"
+    if "WaterLevel" in df.columns and "water_level" not in df.columns:
+        rename_map["WaterLevel"] = "water_level"
+
+    if rename_map:
+        df = df.rename(columns=rename_map)
+
+    return df
+
+
 @st.cache_data(ttl=3600)
 def fetch_openmeteo_monthly(start_date, end_date, latitude, longitude):
     cache_session = requests_cache.CachedSession('.cache', expire_after=-1)
@@ -129,10 +148,11 @@ def fetch_openmeteo_monthly(start_date, end_date, latitude, longitude):
 @st.cache_data
 def load_initial_data(data_file):
     df = pd.read_csv(data_file, sep="\t")
-    # Robust date parsing to handle YYYY-MM and potential extra chars
+    df = normalize_columns(df)  # ✅ TAMBAHKAN INI
     df["date"] = pd.to_datetime(df["date"], format="mixed")
     df = df.sort_values("date").reset_index(drop=True)
     return df
+
 
 
 @st.cache_data
@@ -170,6 +190,7 @@ def get_data(site_config):
     added_rows = load_added_data(site_config["added_data_file"])
     if len(added_rows) > 0:
         added_df = pd.DataFrame(added_rows)
+        added_df = normalize_columns(added_df) 
         added_df["date"] = pd.to_datetime(added_df["date"])
         for col in WEATHER_VARS:
             if col not in added_df.columns:
@@ -181,7 +202,7 @@ def get_data(site_config):
         for col in WEATHER_VARS:
             df[col] = df[col].fillna(method="ffill")
         if "water_level" in df.columns:
-            df["water level"] = df["water_level"].fillna(method="ffill")
+            df["water_level"] = df["water_level"].fillna(method="ffill")
     return df
 
 
