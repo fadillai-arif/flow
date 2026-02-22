@@ -68,13 +68,6 @@ SITES = {
         "longitude": 115.304637,
         "has_water_level": True,
     },
-    "Site T": {
-        "data_file": "attached_assets/site_t_flowrate.txt",
-        "added_data_file": "added_data_site_t.json",
-        "latitude": -5.445672,
-        "longitude": 104.668215,
-        "has_water_level": True,
-    },
 }
 
 WEATHER_VARS = ["precipitation", "et0"]
@@ -707,75 +700,6 @@ if active_tab == "Data & Analisis":
                 fig_corr.update_layout(height=300, xaxis_title="Lag", yaxis_title="Corr", margin=dict(t=10))
                 st.plotly_chart(fig_corr, use_container_width=True)
 
-    if has_water_level and "water_level" in df.columns:
-        st.subheader("Lag Correlation: Variabel Cuaca → Water Level")
-        for row_start in range(0, len(WEATHER_VARS), 3):
-            row_vars = WEATHER_VARS[row_start:row_start + 3]
-            cols_lag_wl = st.columns(len(row_vars))
-            for i, var in enumerate(row_vars):
-                mask = (~df["water_level"].isna()) & (~df[var].isna())
-                target_wl = df.loc[mask, "water_level"].values
-                x_weather = df.loc[mask, var].values
-                
-                with cols_lag_wl[i]:
-                    st.markdown(f"**{WEATHER_LABELS[var]}**")
-                    if len(target_wl) < 10:
-                        st.warning("Data water level tidak cukup untuk analisis lag correlation.")
-                    else:
-                        bl_wl, corr_df_wl = find_best_lag(target_wl, x_weather)
-                        st.info(f"Best Lag: **{bl_wl} bulan**")
-                        fig_corr_wl = go.Figure()
-                        colors_wl = ["#ff7f0e" if lag == bl_wl else "#2ca02c" for lag in corr_df_wl["Lag"]]
-                        fig_corr_wl.add_trace(go.Bar(x=corr_df_wl["Lag"], y=corr_df_wl["Correlation"], marker_color=colors_wl))
-                        fig_corr_wl.update_layout(height=300, xaxis_title="Lag", yaxis_title="Corr", margin=dict(t=10))
-                        st.plotly_chart(fig_corr_wl, use_container_width=True)
-
-    if has_water_level and "water_level" in df.columns:
-        st.subheader("Lag Correlation: Variabel Cuaca → Water Level")
-        for row_start in range(0, len(WEATHER_VARS), 3):
-            row_vars = WEATHER_VARS[row_start:row_start + 3]
-            cols_lag_wl = st.columns(len(row_vars))
-            for i, var in enumerate(row_vars):
-                mask = (~df["water_level"].isna()) & (~df[var].isna())
-                target_wl = df.loc[mask, "water_level"].values
-                x_weather = df.loc[mask, var].values
-                
-                with cols_lag_wl[i]:
-                    st.markdown(f"**{WEATHER_LABELS[var]}**")
-                    if len(target_wl) < 10:
-                        st.warning("Data water level tidak cukup untuk analisis lag correlation.")
-                    else:
-                        bl_wl, corr_df_wl = find_best_lag(target_wl, x_weather)
-                        st.info(f"Best Lag: **{bl_wl} bulan**")
-                        fig_corr_wl = go.Figure()
-                        colors_wl = ["#ff7f0e" if lag == bl_wl else "#2ca02c" for lag in corr_df_wl["Lag"]]
-                        fig_corr_wl.add_trace(go.Bar(x=corr_df_wl["Lag"], y=corr_df_wl["Correlation"], marker_color=colors_wl))
-                        fig_corr_wl.update_layout(height=300, xaxis_title="Lag", yaxis_title="Corr", margin=dict(t=10))
-                        st.plotly_chart(fig_corr_wl, use_container_width=True)
-
-    if has_water_level and "water_level" in df.columns:
-        st.subheader("Lag Correlation: Variabel Cuaca → Water Level")
-        for row_start in range(0, len(WEATHER_VARS), 3):
-            row_vars = WEATHER_VARS[row_start:row_start + 3]
-            cols_lag_wl = st.columns(len(row_vars))
-            for i, var in enumerate(row_vars):
-                mask = (~df["water_level"].isna()) & (~df[var].isna())
-                target_wl = df.loc[mask, "water_level"].values
-                x_weather = df.loc[mask, var].values
-                
-                with cols_lag_wl[i]:
-                    st.markdown(f"**{WEATHER_LABELS[var]}**")
-                    if len(target_wl) < 10:
-                        st.warning("Data water level tidak cukup untuk analisis lag correlation.")
-                    else:
-                        bl_wl, corr_df_wl = find_best_lag(target_wl, x_weather)
-                        st.info(f"Best Lag: **{bl_wl} bulan**")
-                        fig_corr_wl = go.Figure()
-                        colors_wl = ["#ff7f0e" if lag == bl_wl else "#2ca02c" for lag in corr_df_wl["Lag"]]
-                        fig_corr_wl.add_trace(go.Bar(x=corr_df_wl["Lag"], y=corr_df_wl["Correlation"], marker_color=colors_wl))
-                        fig_corr_wl.update_layout(height=300, xaxis_title="Lag", yaxis_title="Corr", margin=dict(t=10))
-                        st.plotly_chart(fig_corr_wl, use_container_width=True)
-
     st.subheader("Data Tabel")
     display_df = df.copy()
     display_df["date"] = display_df["date"].dt.strftime("%Y-%m")
@@ -940,96 +864,158 @@ elif active_tab == "Model & Forecast":
             st.dataframe(preview_w, use_container_width=True, hide_index=True)
 
 
-    # Tab Input Data Baru
-    elif active_tab == "Input Data Baru":
-        st.header(f"Input Data Baru - {selected_site}")
-        st.write("Masukkan data bulanan baru di bawah ini. Data akan disimpan secara lokal di Replit.")
+elif active_tab == "Input Data Baru":
+    st.header("Input Data Baru")
+    st.markdown("Tambahkan beberapa data sekaligus. Data cuaca otomatis diambil dari Open-Meteo.")
 
-        added_data = load_added_data(site_config["added_data_file"])
-        
-        # Autodetect tanggal terakhir
-        last_date = df["date"].max()
-        if pd.isna(last_date):
-             next_start_date = pd.Timestamp.now().replace(day=1)
-        else:
-             next_start_date = (last_date + pd.DateOffset(months=1)).replace(day=1)
+    last_date = df["date"].iloc[-1]
+    next_dates = pd.date_range(start=last_date + pd.DateOffset(months=1), periods=6, freq="MS")
 
-        with st.form(key=f"input_form_{selected_site}"):
-            new_entries = []
-            for i in range(6):
-                current_date = (next_start_date + pd.DateOffset(months=i))
-                # Selalu gunakan 3 kolom agar layout stabil
-                c1, c2, c3 = st.columns(3)
-                with c1:
-                    st.write(f"**Bulan {i+1}:** {current_date.strftime('%B %Y')}")
-                    # Hidden date input atau simpan value di list
-                    d = current_date.date()
-                with c2:
-                    f = st.number_input(f"Flowrate {i+1}", min_value=0.0, step=0.01, format="%.2f", key=f"input_{selected_site}_flow_{i}")
-                with c3:
-                    if has_water_level:
-                        wl = st.number_input(f"Water Level {i+1}", min_value=0.0, step=0.01, format="%.2f", key=f"input_{selected_site}_wl_{i}")
-                    else:
-                        st.empty()
-                        wl = 0.0
-                new_entries.append({"date": d, "flowrate": f, "water_level": wl})
-            
-            submit = st.form_submit_button("Simpan Data", use_container_width=True)
+    with st.form("input_data_form"):
+        st.markdown("**Isi flowrate di bawah** (data cuaca akan otomatis diambil dari Open-Meteo):")
+        input_dates = []
+        input_flowrates = []
+        input_waterlevels = []
         
-        if submit:
-            new_rows = []
-            for entry in new_entries:
-                if entry["date"] is not None:
-                    # Validasi: minimal salah satu terisi (>0)
-                    is_valid = False
-                    if has_water_level:
-                        if entry["flowrate"] > 0 or entry["water_level"] > 0:
-                            is_valid = True
-                    else:
-                        if entry["flowrate"] > 0:
-                            is_valid = True
-                    
-                    if is_valid:
-                        row = {
-                            "date": entry["date"].strftime("%Y-%m"),
-                            "flowrate": float(entry["flowrate"]) if entry["flowrate"] > 0 else None
-                        }
-                        if has_water_level:
-                            row["water_level"] = float(entry["water_level"]) if entry["water_level"] > 0 else None
-                        
-                        # Fetch weather
-                        try:
-                            date_str = entry["date"].strftime("%Y-%m-%d")
-                            weather_row = fetch_openmeteo_monthly(date_str, date_str, site_config["latitude"], site_config["longitude"])
-                            if not weather_row.empty:
-                                w_data = weather_row.iloc[0].to_dict()
-                                row.update({
-                                    "precipitation": w_data.get("precipitation"),
-                                    "et0": w_data.get("et0"),
-                                    "rainfall": w_data.get("precipitation")
-                                })
-                        except:
-                            pass
-                        
-                        new_rows.append(row)
-            
-            if len(new_rows) > 0:
-                added_data.extend(new_rows)
-                save_added_data(added_data, site_config["added_data_file"])
-                st.success(f"Berhasil menyimpan {len(new_rows)} data baru!")
-                st.rerun()
+        for i in range(6):
+            if has_water_level:
+                c1, c2, c3 = st.columns([1, 1, 1])
             else:
-                st.warning("Tidak ada data valid untuk disimpan. Pastikan tanggal dan nilai terisi.")
+                c1, c2 = st.columns([1, 1])
 
-    if len(added_data) > 0:
+            with c1:
+                d = st.text_input(
+                    f"Date {i+1} (YYYY-MM)",
+                    value=next_dates[i].strftime("%Y-%m"),
+                    key=f"date_{i}"
+                )
+
+            with c2:
+                f = st.number_input(
+                    f"Flowrate {i+1}",
+                    min_value=0.0, max_value=1000.0,
+                    value=0.0, step=0.01,
+                    key=f"flow_{i}"
+                )
+
+            input_dates.append(d)
+            input_flowrates.append(f)
+
+            if has_water_level:
+                with c3:
+                    wl = st.number_input(
+                        f"Water Level {i+1}",
+                        min_value=0.0, max_value=100.0,
+                        value=0.0, step=0.01,
+                        key=f"wl_{i}"
+                    )
+                input_waterlevels.append(wl)
+
+
+        submitted_data = st.form_submit_button("Tambah Semua Data", type="primary", use_container_width=True)
+
+    if submitted_data:
+        edited_df = pd.DataFrame({
+            "date": input_dates,
+            "flowrate": input_flowrates
+        })
+
+        if has_water_level:
+            edited_df["water_level"] = input_waterlevels
+
+        edited_df["flowrate"] = edited_df["flowrate"].replace(0, np.nan)
+        if has_water_level:
+            edited_df["water_level"] = edited_df["water_level"].replace(0, np.nan)
+
+        # Valid jika minimal salah satu terisi (flowrate atau water_level)
+        cols_check = ["flowrate"] + (["water_level"] if has_water_level else [])
+        valid_rows = edited_df.dropna(subset=cols_check, how="all").copy()
+
+        if len(valid_rows) == 0:
+            st.error("Tidak ada data valid (flowrate &/atau water level masih kosong semua).")
+        else:
+            existing_dates = df["date"].tolist()
+            added_count = 0
+            skipped = []
+            new_rows_to_add = []
+            for _, row in valid_rows.iterrows():
+                try:
+                    date_dt = pd.to_datetime(row["date"], format="%Y-%m")
+                    if date_dt in existing_dates:
+                        skipped.append(row["date"])
+                    else:
+                        new_row = {
+                            "date": row["date"],
+                            "flowrate": float(row["flowrate"]),
+                        }
+
+                        if has_water_level and "water_level" in row:
+                            new_row["water_level"] = float(row["water_level"])
+
+                        new_rows_to_add.append(new_row)
+                        existing_dates.append(date_dt)
+                        added_count += 1
+                except Exception:
+                    skipped.append(str(row["date"]))
+
+            if added_count > 0:
+                weather_fetched = False
+                try:
+                    dates_to_fetch = [pd.to_datetime(r["date"], format="%Y-%m") for r in new_rows_to_add]
+                    min_date = min(dates_to_fetch).strftime("%Y-%m-%d")
+                    max_date = (max(dates_to_fetch) + pd.DateOffset(months=1) - pd.Timedelta(days=1)).strftime("%Y-%m-%d")
+                    weather_new = fetch_openmeteo_monthly(min_date, max_date, site_config["latitude"], site_config["longitude"])
+                    weather_dict = {}
+                    for _, wr in weather_new.iterrows():
+                        key = wr["date"].strftime("%Y-%m")
+                        w_entry = {"rainfall": wr["precipitation"]}
+                        for wv in WEATHER_VARS:
+                            w_entry[wv] = wr[wv]
+                        weather_dict[key] = w_entry
+                    for nr in new_rows_to_add:
+                        if nr["date"] in weather_dict:
+                            nr.update(weather_dict[nr["date"]])
+                            weather_fetched = True
+                        else:
+                            for wv in WEATHER_VARS:
+                                nr[wv] = df[wv].iloc[-1]
+                            nr["rainfall"] = df["precipitation"].iloc[-1]
+                except Exception:
+                    for nr in new_rows_to_add:
+                        for wv in WEATHER_VARS:
+                            nr[wv] = df[wv].iloc[-1]
+                        nr["rainfall"] = df["precipitation"].iloc[-1]
+                    st.warning("Gagal mengambil data cuaca dari Open-Meteo. Menggunakan data cuaca terakhir sebagai pengganti.")
+
+                for nr in new_rows_to_add:
+                    st.session_state.added_rows.append(nr)
+                save_added_data(st.session_state.added_rows, site_config["added_data_file"])
+
+                if "forecast_results" in st.session_state:
+                    del st.session_state.forecast_results
+                load_data_with_weather.clear()
+
+                if weather_fetched:
+                    st.success(f"**{added_count} data** berhasil ditambahkan dengan data cuaca dari Open-Meteo!")
+                else:
+                    st.success(f"**{added_count} data** berhasil ditambahkan.")
+            if skipped:
+                st.warning(f"Data berikut dilewati (sudah ada/format salah): {', '.join(skipped)}")
+            if added_count > 0:
+                st.rerun()
+
+    if len(st.session_state.added_rows) > 0:
         st.subheader("Data yang Sudah Ditambahkan")
-        df_added = pd.DataFrame(added_data)
-        df_added = normalize_columns(df_added)
-        if has_water_level and "water_level" not in df_added.columns:
-            df_added["water_level"] = None
-        st.dataframe(df_added, use_container_width=True)
-        if st.button("Hapus Semua Data Tambahan", key=f"clear_{selected_site}"):
+        added_display = pd.DataFrame(st.session_state.added_rows)
+        st.dataframe(added_display, use_container_width=True, hide_index=True)
+        if st.button("Reset Data Tambahan", type="secondary"):
+            st.session_state.added_rows = []
             save_added_data([], site_config["added_data_file"])
+            if "forecast_results" in st.session_state:
+                del st.session_state.forecast_results
+            if "water_forecast_results" in st.session_state:
+                del st.session_state.water_forecast_results
+            load_data_with_weather.clear()
             st.rerun()
 
 elif active_tab == "Export":
