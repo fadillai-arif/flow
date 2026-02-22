@@ -77,7 +77,7 @@ WEATHER_LABELS = {
 }
 
 
-ef normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
+def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df.columns = [c.strip() for c in df.columns]
 
@@ -614,12 +614,18 @@ def run_forecast(df, model_choice, test_size, forecast_months, future_weather=No
 
 
 site_names = ["Site B", "Site T", "Site L", "Site K", "Site S", "Site KL", "Site M"]
-if "selected_site" not in st.session_state:
-    st.session_state.selected_site = site_names[0]
 
-selected_site = st.selectbox("Pilih Lokasi", site_names, index=site_names.index(st.session_state.selected_site), key="selected_site")
+selected_site = st.selectbox(
+    "Pilih Lokasi",
+    site_names,
+    key="selected_site"
+)
+
 site_config = SITES[selected_site]
-has_water_level = site_config.get("has_water_level", False)
+has_water_level = bool(site_config.get("has_water_level", False))
+st.sidebar.write("DEBUG selected_site:", selected_site)
+st.sidebar.write("DEBUG site_config keys:", list(site_config.keys()))
+st.sidebar.write("DEBUG has_water_level:", has_water_level)
 
 st.title(f"Forecasting {selected_site}")
 st.markdown(f"Analisis dan prediksi {'flowrate & water level' if has_water_level else 'flowrate'} berdasarkan data cuaca dari Open-Meteo (precipitation, evapotranspiration).")
