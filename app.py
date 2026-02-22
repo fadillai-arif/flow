@@ -922,11 +922,17 @@ elif active_tab == "Input Data Baru":
 
         if has_water_level:
             edited_df["water_level"] = input_waterlevels
-        valid_rows = edited_df[edited_df["flowrate"] > 0].copy()
+
+        edited_df["flowrate"] = edited_df["flowrate"].replace(0, np.nan)
         if has_water_level:
-            valid_rows = valid_rows[valid_rows["water_level"] > 0].copy()
+            edited_df["water_level"] = edited_df["water_level"].replace(0, np.nan)
+
+        # Valid jika minimal salah satu terisi (flowrate atau water_level)
+        cols_check = ["flowrate"] + (["water_level"] if has_water_level else [])
+        valid_rows = edited_df.dropna(subset=cols_check, how="all").copy()
+
         if len(valid_rows) == 0:
-            st.error("Tidak ada data valid (flowrate masih 0 semua).")
+            st.error("Tidak ada data valid (flowrate &/atau water level masih kosong semua).")
         else:
             existing_dates = df["date"].tolist()
             added_count = 0
