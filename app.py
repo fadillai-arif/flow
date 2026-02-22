@@ -622,7 +622,8 @@ selected_site = st.selectbox(
 )
 
 site_config = SITES[selected_site]
-has_water_level = bool(site_config.get("has_water_level", False))
+WATERLEVEL_SITES = {"Site T", "Site S", "Site M"}
+has_water_level = bool(site_config.get("has_water_level", False)) or (selected_site in WATERLEVEL_SITES)
 st.sidebar.write("DEBUG selected_site:", selected_site)
 st.sidebar.write("DEBUG site_config keys:", list(site_config.keys()))
 st.sidebar.write("DEBUG has_water_level:", has_water_level)
